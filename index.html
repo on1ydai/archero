@@ -81,16 +81,34 @@
             padding: 0 20px;
         }
 
-        /* Header */
+        /* Header with scroll animation */
         header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
             padding: 20px 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+
+        header.scrolled {
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        header.hidden {
+            transform: translateY(-100%);
+        }
+
+        body {
+            padding-top: 80px; /* Account for fixed header */
         }
 
         .header-content {
@@ -158,27 +176,25 @@
 
         /* Game Section */
         .game-section {
-            background: var(--white);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            background: transparent;
+            padding: 0;
+            margin-bottom: 20px;
         }
 
         .game-container {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         .game-frame {
             width: 100%;
-            max-width: 800px;
-            height: 600px;
+            max-width: 100%;
+            height: 70vh;
+            min-height: 500px;
             border: none;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
             background: var(--primary-gray);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         /* Content Sections */
@@ -273,24 +289,37 @@
             font-size: 16px;
         }
 
-        /* Responsive Design */
+        /* Mobile-first responsive design */
         @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+
             .container {
-                padding: 0 16px;
+                padding: 0 12px;
             }
 
             .hero {
-                padding: 40px 0;
+                padding: 30px 0;
             }
 
-            .game-section,
-            .content-section {
-                padding: 24px;
-                margin-bottom: 24px;
+            .game-section {
+                padding: 0;
+                margin-bottom: 20px;
             }
 
             .game-frame {
-                height: 400px;
+                height: 60vh;
+                min-height: 400px;
+                border-radius: 8px;
+                margin: 0 -12px; /* Full width on mobile */
+                width: calc(100% + 24px);
+            }
+
+            .content-section {
+                padding: 20px;
+                margin-bottom: 20px;
+                border-radius: 16px;
             }
 
             .features-grid {
@@ -299,22 +328,79 @@
             }
 
             .header-content {
-                flex-direction: column;
-                gap: 16px;
+                justify-content: center;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            header.scrolled {
+                padding: 8px 0;
+            }
+
+            header.scrolled .logo {
+                font-size: 20px;
+            }
+
+            /* Touch-friendly buttons */
+            .play-button {
+                padding: 14px 28px;
+                font-size: 16px;
+                min-height: 44px; /* iOS recommended touch target */
             }
         }
 
         @media (max-width: 480px) {
+            body {
+                padding-top: 60px;
+            }
+
             .game-frame {
-                height: 300px;
+                height: 50vh;
+                min-height: 300px;
+                border-radius: 0; /* Full edge-to-edge on small screens */
+                margin: 0 -12px;
+                width: calc(100% + 24px);
             }
 
             .content-section h2 {
-                font-size: 24px;
+                font-size: 22px;
             }
 
             .content-section p {
                 font-size: 16px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+            }
+        }
+
+        /* Landscape phone optimization */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .game-frame {
+                height: 80vh;
+                min-height: 250px;
+            }
+
+            .hero {
+                padding: 20px 0;
+            }
+
+            body {
+                padding-top: 50px;
+            }
+        }
+
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .game-frame {
+                image-rendering: -webkit-optimize-contrast;
             }
         }
 
@@ -375,6 +461,7 @@
                         class="game-frame"
                         title="Archer Hero Game"
                         allowfullscreen
+                        allow="gamepad; fullscreen"
                         loading="lazy">
                         <p>Your browser doesn't support iframes. Please <a href="https://www.onlinegames.io/games/2023/unity/archer-hero/index.html">click here to play Archer Hero</a>.</p>
                     </iframe>
@@ -437,24 +524,98 @@
     </footer>
 
     <script>
-        // Simple analytics and user experience enhancements
+        // Enhanced mobile experience and header animation
         document.addEventListener('DOMContentLoaded', function() {
+            const header = document.querySelector('header');
+            let lastScrollY = window.scrollY;
+            let scrollTimeout;
+
+            // Header scroll animation
+            function handleScroll() {
+                const currentScrollY = window.scrollY;
+                const scrollDifference = currentScrollY - lastScrollY;
+
+                // Add scrolled class when scrolling down
+                if (currentScrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+
+                // Hide header when scrolling down, show when scrolling up
+                if (scrollDifference > 5 && currentScrollY > 100) {
+                    header.classList.add('hidden');
+                } else if (scrollDifference < -5 || currentScrollY < 100) {
+                    header.classList.remove('hidden');
+                }
+
+                lastScrollY = currentScrollY;
+
+                // Clear hide timeout on scroll
+                clearTimeout(scrollTimeout);
+                header.classList.remove('hidden');
+                
+                // Hide header after 3 seconds of no scrolling (mobile optimization)
+                if (window.innerWidth <= 768 && currentScrollY > 200) {
+                    scrollTimeout = setTimeout(() => {
+                        if (window.scrollY > 200) {
+                            header.classList.add('hidden');
+                        }
+                    }, 3000);
+                }
+            }
+
+            // Throttled scroll listener for better performance
+            let ticking = false;
+            function requestTick() {
+                if (!ticking) {
+                    requestAnimationFrame(handleScroll);
+                    ticking = true;
+                    setTimeout(() => { ticking = false; }, 16);
+                }
+            }
+
+            window.addEventListener('scroll', requestTick, { passive: true });
+
             // Smooth scrolling for anchor links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
                     const target = document.querySelector(this.getAttribute('href'));
                     if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
+                        const headerHeight = header.offsetHeight;
+                        const targetPosition = target.offsetTop - headerHeight - 20;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
                         });
                     }
                 });
             });
 
-            // Lazy loading for iframe
+            // Mobile game optimization
             const gameFrame = document.querySelector('.game-frame');
+            
+            // Prevent zoom on double tap for game area
+            gameFrame.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+
+            // Fullscreen support for mobile
+            if (gameFrame && 'requestFullscreen' in gameFrame) {
+                gameFrame.addEventListener('dblclick', function() {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        this.requestFullscreen().catch(err => {
+                            console.log('Fullscreen not supported');
+                        });
+                    }
+                });
+            }
+
+            // Lazy loading for iframe with intersection observer
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -464,14 +625,41 @@
                         observer.unobserve(gameFrame);
                     }
                 });
-            });
+            }, { threshold: 0.1 });
+            
             observer.observe(gameFrame);
+
+            // Mobile viewport height fix
+            function setViewportHeight() {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            }
+            
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', () => {
+                setTimeout(setViewportHeight, 500);
+            });
 
             // Add loading state for game iframe
             gameFrame.addEventListener('load', function() {
                 this.style.background = 'transparent';
             });
+
+            // Mobile menu toggle (if needed)
+            const logo = document.querySelector('.logo');
+            logo.addEventListener('click', function(e) {
+                if (window.location.hash) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
         });
+
+        // Performance optimization: Reduce animations on low-end devices
+        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
+            document.documentElement.style.setProperty('--animation-duration', '0.1s');
+        }
     </script>
 </body>
 </html>
